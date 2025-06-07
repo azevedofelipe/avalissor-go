@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/azevedofelipe/avalissor-go/internal/auth"
 	"github.com/azevedofelipe/avalissor-go/internal/database"
 	"github.com/google/uuid"
 )
@@ -22,6 +23,7 @@ func (cfg *apiConfig) handlerUserCreation(w http.ResponseWriter, r *http.Request
 	type parameters struct {
 		Username string `json:"username"`
 		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	params := parameters{}
@@ -33,10 +35,25 @@ func (cfg *apiConfig) handlerUserCreation(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	if params.Username == "" || params.Email == "" || params.Password == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		log.Print("Missing required fields to create account")
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(params.Password)
+	if err != nil {
+		log.Printf("Error reading json: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+
 	user, err := cfg.queries.CreateUser(r.Context(), database.CreateUserParams{
-		Email:    params.Email,
-		Username: params.Username,
+		Email:          params.Email,
+		Username:       params.Username,
+		HashedPassword: hashedPassword,
 	})
+
 	if err != nil {
 		log.Printf("Error creating user: %s", err)
 		w.WriteHeader(500)
@@ -50,6 +67,7 @@ func (cfg *apiConfig) handlerUserCreation(w http.ResponseWriter, r *http.Request
 		UpdatedAt: user.UpdatedAt,
 		CreatedAt: user.CreatedAt,
 	}
+
 	dat, err := json.Marshal(response)
 	if err != nil {
 		log.Printf("Error marshalling response json: %s", err)
@@ -57,9 +75,11 @@ func (cfg *apiConfig) handlerUserCreation(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	log.Print("Created user successfully")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	w.Write(dat)
+}
 
 func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
@@ -93,6 +113,33 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Invalid username or password"))
 		return
 	}
+
+	jwtToken, err := auth.MakeJWT(user.ID, cfg.tokenSecret)
+	if err != nil {
+		log.Printf("Error making JWT: %s", err)
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(500)
+		w.Write([]byte("Error creating JWT"))
+		return
+	}
+
+	type jsonResp struct {
+		Token string `json:"token"`
+	}
+
+	response := jsonResp{Token: jwtToken}
+
+	dat, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("Error marshalling response json: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(dat)
+}
 
 func (cfg *apiConfig) handlerResetUsers(w http.ResponseWriter, r *http.Request) {
 	err := cfg.queries.DeleteUsers(r.Context())

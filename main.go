@@ -12,7 +12,8 @@ import (
 )
 
 type apiConfig struct {
-	queries *database.Queries
+	queries     *database.Queries
+	tokenSecret string
 }
 
 func main() {
@@ -21,18 +22,22 @@ func main() {
 	godotenv.Load()
 
 	dbURL := os.Getenv("DB_URL")
+	tokenSecret := os.Getenv("TOKEN_SECRET")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Printf("Error opening database: %s", err)
 	}
 	dbQueries := database.New(db)
+
 	apiCfg := apiConfig{
-		queries: dbQueries,
+		queries:     dbQueries,
+		tokenSecret: tokenSecret,
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/users", apiCfg.handlerUserCreation)
+	mux.HandleFunc("POST /api/login", apiCfg.handlerUserLogin)
 
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerResetUsers)
 
