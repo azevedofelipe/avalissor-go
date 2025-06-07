@@ -61,4 +61,37 @@ func (cfg *apiConfig) handlerUserCreation(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(200)
 	w.Write(dat)
 
+func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	params := parameters{}
+	decoder := json.NewDecoder(r.Body)
+
+	if err := decoder.Decode(&params); err != nil {
+		log.Printf("Error reading json: %s", err)
+		w.WriteHeader(400)
+		return
+	}
+
+	user, err := cfg.queries.GetUserByUsername(r.Context(), params.Username)
+	if err != nil {
+		log.Printf("Error getting user in database: %s", err)
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(401)
+		w.Write([]byte("Invalid username or password"))
+		return
+	}
+
+	err = auth.CheckPasswordHash(user.HashedPassword, params.Password)
+	if err != nil {
+		log.Printf("Passwords dont match: %s", err)
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(401)
+		w.Write([]byte("Invalid username or password"))
+		return
+	}
+
 }
