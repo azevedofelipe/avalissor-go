@@ -34,6 +34,8 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/users", apiCfg.handlerUserCreation)
 
+	mux.HandleFunc("POST /admin/reset", apiCfg.handlerResetUsers)
+
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,

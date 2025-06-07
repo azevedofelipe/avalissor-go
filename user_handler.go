@@ -94,4 +94,13 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+func (cfg *apiConfig) handlerResetUsers(w http.ResponseWriter, r *http.Request) {
+	err := cfg.queries.DeleteUsers(r.Context())
+	if err != nil {
+		log.Printf("Error deleting all users: %s", err)
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(401)
+		w.Write([]byte("Error deleting all users"))
+		return
+	}
 }
