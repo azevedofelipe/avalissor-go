@@ -40,6 +40,24 @@ func (q *Queries) CreateCollege(ctx context.Context, arg CreateCollegeParams) (C
 	return i, err
 }
 
+const getCollegeByID = `-- name: GetCollegeByID :one
+SELECT id, name_college, created_at, updated_at, created_by FROM college
+WHERE id = $1
+`
+
+func (q *Queries) GetCollegeByID(ctx context.Context, id int32) (College, error) {
+	row := q.db.QueryRowContext(ctx, getCollegeByID, id)
+	var i College
+	err := row.Scan(
+		&i.ID,
+		&i.NameCollege,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+	)
+	return i, err
+}
+
 const getColleges = `-- name: GetColleges :many
 SELECT id, name_college, created_at, updated_at, created_by FROM college
 `

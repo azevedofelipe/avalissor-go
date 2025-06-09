@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/azevedofelipe/avalissor-go/internal/auth"
 	"github.com/azevedofelipe/avalissor-go/internal/database"
@@ -15,12 +16,37 @@ type College struct {
 }
 
 func (cfg *apiConfig) handlerGetColleges(w http.ResponseWriter, r *http.Request) {
+	collegeIdString := r.PathValue("collegeID")
 
-	colleges, err := cfg.queries.GetColleges(r.Context())
-	if err != nil {
-		http.Error(w, "Erro obtendo faculdades", 500)
-		log.Printf("Erro buscando faculdades: %v", err)
-		return
+	var colleges []database.College
+	var err error
+
+	if collegeIdString != "" {
+		collegeId, err := strconv.Atoi(collegeIdString)
+		if err != nil {
+			w.WriteHeader(500)
+			log.Printf("Erro convertendo collegeID: %v", err)
+			return
+		}
+
+		college, err := cfg.queries.GetCollegeByID(r.Context(), int32(collegeId))
+		if err != nil {
+			http.Error(w, "Erro obtendo faculdades", 500)
+			log.Printf("Erro buscando faculdades: %v", err)
+			return
+		}
+
+		colleges = []database.College{college}
+		log.Printf("Getting single college")
+
+	} else {
+		colleges, err = cfg.queries.GetColleges(r.Context())
+		if err != nil {
+			http.Error(w, "Erro obtendo faculdades", 500)
+			log.Printf("Erro buscando faculdades: %v", err)
+			return
+		}
+		log.Printf("Getting all colleges")
 	}
 
 	response := make([]College, len(colleges))
@@ -81,37 +107,6 @@ func (cfg *apiConfig) handlerCreateCollege(w http.ResponseWriter, r *http.Reques
 	response := College{
 		ID:   int(college.ID),
 		Name: college.NameCollege,
-	}
-
-	dat, err := json.Marshal(&response)
-	if err != nil {
-		http.Error(w, "Erro gerando resposta", 500)
-		log.Printf("Error marshalling response: %v", err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	w.Write(dat)
-
-}
-
-func (cfg *apiConfig) handlerGetCollegeID(w http.ResponseWriter, r *http.Request) {
-	college_id := r.PathValue("chirpID")
-
-	colleges, err := cfg.queries.GetColleges(r.Context())
-	if err != nil {
-		http.Error(w, "Erro obtendo faculdades", 500)
-		log.Printf("Erro buscando faculdades: %v", err)
-		return
-	}
-
-	response := make([]College, len(colleges))
-	for idx, college := range colleges {
-		response[idx] = College{
-			ID:   int(college.ID),
-			Name: college.NameCollege,
-		}
 	}
 
 	dat, err := json.Marshal(&response)

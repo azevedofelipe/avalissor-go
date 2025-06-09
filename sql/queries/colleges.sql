@@ -10,3 +10,7 @@ VALUES (
 	$2
 )
 RETURNING *;
+
+-- name: GetCollegeByID :one
+SELECT * FROM college
+WHERE id = $1;
