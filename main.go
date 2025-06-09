@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/azevedofelipe/avalissor-go/internal/auth"
 	"github.com/azevedofelipe/avalissor-go/internal/database"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -40,8 +42,8 @@ func main() {
 	mux.HandleFunc("POST /api/login", apiCfg.handlerUserLogin)
 
 	mux.HandleFunc("GET /api/colleges", apiCfg.handlerGetColleges)
-	mux.HandleFunc("GET /api/colleges/{collegeID}", apiCfg.handlerGetColleges)
 	mux.HandleFunc("POST /api/colleges", apiCfg.handlerCreateCollege)
+	mux.HandleFunc("GET /api/colleges/{collegeID}", apiCfg.handlerGetColleges)
 
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerResetUsers)
 
@@ -51,4 +53,19 @@ func main() {
 	}
 	log.Printf("Serving on port: %s\n", port)
 	log.Fatal(srv.ListenAndServe())
+}
+
+// Validate JWT from Header
+func (cfg *apiConfig) AuthorizeHeader(header http.Header) (userID uuid.UUID, err error) {
+	tokenString, err := auth.GetBearerToken(header)
+	if err != nil {
+		return
+	}
+
+	userID, err = auth.ValidateJWT(tokenString, cfg.tokenSecret)
+	if err != nil {
+		return
+	}
+
+	return
 }
