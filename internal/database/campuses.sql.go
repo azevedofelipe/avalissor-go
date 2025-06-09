@@ -41,3 +41,13 @@ func (q *Queries) CreateCampus(ctx context.Context, arg CreateCampusParams) (Cam
 	)
 	return i, err
 }
+
+const deleteCampus = `-- name: DeleteCampus :exec
+DELETE FROM campus
+WHERE id = $1
+`
+
+func (q *Queries) DeleteCampus(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, deleteCampus, id)
+	return err
+}

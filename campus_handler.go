@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -86,4 +87,40 @@ func (cfg *apiConfig) handlerCreateCampus(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(200)
 	w.Write(dat)
 
+}
+
+func (cfg *apiConfig) handlerDeleteCampusID(w http.ResponseWriter, r *http.Request) {
+	campusIdString := r.PathValue("campusID")
+
+	if campusIdString == "" {
+		http.Error(w, "Nenhum collegeID passado para POST", http.StatusBadRequest)
+		log.Printf("No collegeID passed")
+		return
+	}
+
+	campusID, err := strconv.Atoi(campusIdString)
+	if err != nil {
+		http.Error(w, "Invalid collegeID", http.StatusBadRequest)
+		log.Printf("Error converting string: %v", err)
+		return
+	}
+
+	userID, err := cfg.AuthorizeHeader(r.Header)
+	if err != nil {
+		http.Error(w, "Invalid header", http.StatusBadRequest)
+		log.Printf("Error validating header: %v", err)
+		return
+	}
+
+	log.Printf("User %s deleting campus %d", userID, campusID)
+	err = cfg.queries.DeleteCampus(r.Context(), int32(campusID))
+	if err != nil {
+		http.Error(w, "Unable to delete campus", 500)
+		log.Printf("Error deleting campus %d: %v", campusID, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write([]byte(fmt.Sprintf("Succesfully deleted campus %d", campusID)))
 }

@@ -9,3 +9,6 @@ VALUES (
 )
 RETURNING *;
 
+-- name: DeleteCampus :exec
+DELETE FROM campus
+WHERE id = $1;
