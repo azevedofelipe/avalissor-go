@@ -5,6 +5,7 @@
 package database
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,6 +19,15 @@ type Campus struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+type College struct {
+	ID          int32
+	NameCollege string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	CreatedBy   uuid.UUID
+}
+
 type User struct {
 	ID             uuid.UUID
 	Username       string

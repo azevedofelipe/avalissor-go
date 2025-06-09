@@ -39,6 +39,9 @@ func main() {
 	mux.HandleFunc("POST /api/users", apiCfg.handlerUserCreation)
 	mux.HandleFunc("POST /api/login", apiCfg.handlerUserLogin)
 
+	mux.HandleFunc("GET /api/colleges", apiCfg.handlerGetColleges)
+	mux.HandleFunc("POST /api/colleges", apiCfg.handlerCreateCollege)
+
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerResetUsers)
 
 	srv := &http.Server{
