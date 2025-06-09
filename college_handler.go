@@ -85,6 +85,11 @@ func (cfg *apiConfig) handlerCreateCollege(w http.ResponseWriter, r *http.Reques
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
 	err = decoder.Decode(&params)
+	if err != nil {
+		http.Error(w, "Error reading parameters", 400)
+		log.Printf("Error decoding params: %v", err)
+		return
+	}
 
 	college, err := cfg.queries.CreateCollege(r.Context(), database.CreateCollegeParams{
 		NameCollege: params.Name,
@@ -92,8 +97,8 @@ func (cfg *apiConfig) handlerCreateCollege(w http.ResponseWriter, r *http.Reques
 	})
 
 	if err != nil {
-		http.Error(w, "Erro criando faculdade", 500)
-		log.Printf("Erro criando faculdade %s: %v", params.Name, err)
+		http.Error(w, "Error creating college", 500)
+		log.Printf("Error creating college %s: %v", params.Name, err)
 		return
 	}
 
