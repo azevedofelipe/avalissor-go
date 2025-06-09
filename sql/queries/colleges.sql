@@ -14,3 +14,7 @@ RETURNING *;
 -- name: GetCollegeByID :one
 SELECT * FROM college
 WHERE id = $1;
+
+-- name: DeleteCollegeID :exec
+DELETE FROM college
+WHERE id = $1;

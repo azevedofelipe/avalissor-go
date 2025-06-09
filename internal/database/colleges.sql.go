@@ -40,6 +40,16 @@ func (q *Queries) CreateCollege(ctx context.Context, arg CreateCollegeParams) (C
 	return i, err
 }
 
+const deleteCollegeID = `-- name: DeleteCollegeID :exec
+DELETE FROM college
+WHERE id = $1
+`
+
+func (q *Queries) DeleteCollegeID(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, deleteCollegeID, id)
+	return err
+}
+
 const getCollegeByID = `-- name: GetCollegeByID :one
 SELECT id, name_college, created_at, updated_at, created_by FROM college
 WHERE id = $1

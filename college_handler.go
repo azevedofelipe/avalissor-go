@@ -2,11 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/azevedofelipe/avalissor-go/internal/auth"
 	"github.com/azevedofelipe/avalissor-go/internal/database"
 )
 
@@ -71,17 +71,10 @@ func (cfg *apiConfig) handlerGetColleges(w http.ResponseWriter, r *http.Request)
 }
 
 func (cfg *apiConfig) handlerCreateCollege(w http.ResponseWriter, r *http.Request) {
-	token, err := auth.GetBearerToken(r.Header)
+	userID, err := cfg.AuthorizeHeader(r.Header)
 	if err != nil {
-		http.Error(w, "Unauthorized, please provide valid authorization", http.StatusUnauthorized)
-		log.Printf("Error getting token: %v", err)
-		return
-	}
-
-	userID, err := auth.ValidateJWT(token, cfg.tokenSecret)
-	if err != nil {
-		http.Error(w, "Unauthorized, please provide valid authorization", http.StatusUnauthorized)
-		log.Printf("Error validating JWT: %v", err)
+		http.Error(w, "Error authorizing header", http.StatusUnauthorized)
+		log.Printf("Error authorizing header: %v", err)
 		return
 	}
 
@@ -120,4 +113,41 @@ func (cfg *apiConfig) handlerCreateCollege(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(200)
 	w.Write(dat)
 
+}
+
+func (cfg *apiConfig) handlerDeleteCollegeID(w http.ResponseWriter, r *http.Request) {
+	collegeIdString := r.PathValue("collegeID")
+
+	if collegeIdString == "" {
+		http.Error(w, "Error authorizing header", http.StatusBadRequest)
+		log.Printf("No collegeID passed")
+		return
+	}
+
+	collegeId, err := strconv.Atoi(collegeIdString)
+	if err != nil {
+		http.Error(w, "Invalid collegeID", http.StatusBadRequest)
+		log.Printf("Error converting string: %v", err)
+		return
+	}
+
+	userID, err := cfg.AuthorizeHeader(r.Header)
+	if err != nil {
+		http.Error(w, "Error authorizing header", http.StatusUnauthorized)
+		log.Printf("Error authorizing header: %v", err)
+		return
+	}
+
+	log.Printf("UserID %s Deleting college %d", userID, collegeId)
+
+	err = cfg.queries.DeleteCollegeID(r.Context(), int32(collegeId))
+	if err != nil {
+		http.Error(w, "Error deleting college", http.StatusBadRequest)
+		log.Printf("Error deleting college %d: %v", collegeId, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write([]byte(fmt.Sprintf("Successfuly deleted college %d", collegeId)))
 }
