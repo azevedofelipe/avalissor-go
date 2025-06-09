@@ -10,6 +10,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type Campus struct {
+	ID        int32
+	Name      string
+	Location  sql.NullString
+	CollegeID int32
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
 type User struct {
 	ID             uuid.UUID
 	Username       string
