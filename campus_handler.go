@@ -49,9 +49,7 @@ func (cfg *apiConfig) handlerCreateCampus(w http.ResponseWriter, r *http.Request
 		Location string `json:"location"`
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err = decoder.Decode(&params)
+	params, err := decode[parameters](r)
 	if err != nil {
 		http.Error(w, "Error reading parameters", 400)
 		log.Printf("Error decoding params: %v", err)
