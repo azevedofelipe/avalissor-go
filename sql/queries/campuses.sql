@@ -12,3 +12,10 @@ RETURNING *;
 -- name: DeleteCampus :exec
 DELETE FROM campus
 WHERE id = $1;
+
+-- name: GetCampuses :many
+SELECT * FROM campus;
+
+-- name: GetCampusID :one
+SELECT * FROM campus
+WHERE id = $1;

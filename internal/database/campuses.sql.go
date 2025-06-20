@@ -51,3 +51,56 @@ func (q *Queries) DeleteCampus(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, deleteCampus, id)
 	return err
 }
+
+const getCampusID = `-- name: GetCampusID :one
+SELECT id, name, location, college_id, created_at, updated_at FROM campus
+WHERE id = $1
+`
+
+func (q *Queries) GetCampusID(ctx context.Context, id int32) (Campus, error) {
+	row := q.db.QueryRowContext(ctx, getCampusID, id)
+	var i Campus
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Location,
+		&i.CollegeID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getCampuses = `-- name: GetCampuses :many
+SELECT id, name, location, college_id, created_at, updated_at FROM campus
+`
+
+func (q *Queries) GetCampuses(ctx context.Context) ([]Campus, error) {
+	rows, err := q.db.QueryContext(ctx, getCampuses)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Campus
+	for rows.Next() {
+		var i Campus
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Location,
+			&i.CollegeID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

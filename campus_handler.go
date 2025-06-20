@@ -122,3 +122,79 @@ func (cfg *apiConfig) handlerDeleteCampusID(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(200)
 	w.Write([]byte(fmt.Sprintf("Succesfully deleted campus %d", campusID)))
 }
+
+func (cfg *apiConfig) handlerGetCampusID(w http.ResponseWriter, r *http.Request) {
+	campusIdString := r.PathValue("campusID")
+
+	if campusIdString == "" {
+		http.Error(w, "Nenhum collegeID passado para POST", http.StatusBadRequest)
+		log.Printf("No collegeID passed")
+		return
+	}
+
+	campusID, err := strconv.Atoi(campusIdString)
+	if err != nil {
+		http.Error(w, "Invalid collegeID", http.StatusBadRequest)
+		log.Printf("Error converting string: %v", err)
+		return
+	}
+
+	campus, err := cfg.queries.GetCampusID(r.Context(), int32(campusID))
+	if err != nil {
+		http.Error(w, "Unable to get campus", 500)
+		log.Printf("Error getting campus %d: %v", campusID, err)
+		return
+	}
+
+	response := Campus{
+		ID:        campus.ID,
+		Name:      campus.Name,
+		Location:  campus.Location.String,
+		CollegeID: campus.CollegeID,
+		CreatedAt: campus.CreatedAt,
+		UpdatedAt: campus.UpdatedAt,
+	}
+
+	dat, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, "Erro gerando resposta", 500)
+		log.Printf("Error marshalling response: %v", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(dat)
+}
+
+func (cfg *apiConfig) handlerListCampuses(w http.ResponseWriter, r *http.Request) {
+	campuses, err := cfg.queries.GetCampuses(r.Context())
+	if err != nil {
+		http.Error(w, "Unable to get campuses", 500)
+		log.Printf("Error getting campuses: %v", err)
+		return
+	}
+
+	response := make([]Campus, len(campuses))
+	for idx, campus := range campuses {
+		response[idx] = Campus{
+			ID:        campus.ID,
+			Name:      campus.Name,
+			Location:  campus.Location.String,
+			CollegeID: campus.CollegeID,
+			CreatedAt: campus.CreatedAt,
+			UpdatedAt: campus.UpdatedAt,
+		}
+	}
+
+	dat, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, "Erro gerando resposta", 500)
+		log.Printf("Error marshalling response: %v", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(dat)
+}
