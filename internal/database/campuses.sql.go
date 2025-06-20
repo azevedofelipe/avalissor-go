@@ -104,3 +104,38 @@ func (q *Queries) GetCampuses(ctx context.Context) ([]Campus, error) {
 	}
 	return items, nil
 }
+
+const getCollegeCampuses = `-- name: GetCollegeCampuses :many
+SELECT id, name, location, college_id, created_at, updated_at FROM campus
+WHERE college_id = $1
+`
+
+func (q *Queries) GetCollegeCampuses(ctx context.Context, collegeID int32) ([]Campus, error) {
+	rows, err := q.db.QueryContext(ctx, getCollegeCampuses, collegeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Campus
+	for rows.Next() {
+		var i Campus
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Location,
+			&i.CollegeID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

@@ -19,3 +19,7 @@ SELECT * FROM campus;
 -- name: GetCampusID :one
 SELECT * FROM campus
 WHERE id = $1;
+
+-- name: GetCollegeCampuses :many
+SELECT * FROM campus
+WHERE college_id = $1;

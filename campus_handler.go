@@ -45,7 +45,7 @@ func (cfg *apiConfig) handlerCreateCampus(w http.ResponseWriter, r *http.Request
 	}
 
 	type parameters struct {
-		Name     string `json:"campus_name"`
+		Name     string `json:"name"`
 		Location string `json:"location"`
 	}
 
@@ -176,6 +176,54 @@ func (cfg *apiConfig) handlerListCampuses(w http.ResponseWriter, r *http.Request
 	}
 
 	response := make([]Campus, len(campuses))
+	for idx, campus := range campuses {
+		response[idx] = Campus{
+			ID:        campus.ID,
+			Name:      campus.Name,
+			Location:  campus.Location.String,
+			CollegeID: campus.CollegeID,
+			CreatedAt: campus.CreatedAt,
+			UpdatedAt: campus.UpdatedAt,
+		}
+	}
+
+	dat, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, "Erro gerando resposta", 500)
+		log.Printf("Error marshalling response: %v", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(dat)
+}
+
+func (cfg *apiConfig) handlerGetCollegeCampuses(w http.ResponseWriter, r *http.Request) {
+	collegeIdString := r.PathValue("collegeID")
+
+	if collegeIdString == "" {
+		http.Error(w, "Nenhum collegeID passado para POST", http.StatusBadRequest)
+		log.Printf("No collegeID passed")
+		return
+	}
+
+	collegeID, err := strconv.Atoi(collegeIdString)
+	if err != nil {
+		http.Error(w, "Invalid collegeID", http.StatusBadRequest)
+		log.Printf("Error converting string: %v", err)
+		return
+	}
+
+	campuses, err := cfg.queries.GetCollegeCampuses(r.Context(), int32(collegeID))
+	if err != nil {
+		http.Error(w, "Unable to get campus", 500)
+		log.Printf("Error getting campus %d: %v", collegeID, err)
+		return
+	}
+
+	response := make([]Campus, len(campuses))
+
 	for idx, campus := range campuses {
 		response[idx] = Campus{
 			ID:        campus.ID,

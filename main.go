@@ -47,6 +47,7 @@ func main() {
 	mux.HandleFunc("DELETE /api/colleges/{collegeID}", apiCfg.handlerDeleteCollegeID)
 
 	mux.HandleFunc("POST /api/colleges/{collegeID}/campuses", apiCfg.handlerCreateCampus)
+	mux.HandleFunc("GET /api/colleges/{collegeID}/campuses", apiCfg.handlerGetCollegeCampuses)
 	mux.HandleFunc("DELETE /api/campuses/{campusID}", apiCfg.handlerDeleteCampusID)
 	mux.HandleFunc("GET /api/campuses", apiCfg.handlerListCampuses)
 	mux.HandleFunc("GET /api/campuses/{campusID}", apiCfg.handlerGetCampusID)
